@@ -56,6 +56,7 @@ const usersSchema = new Schema({
 usersSchema.pre("save" , async function (next){
     if(this.isModified("password")){
         this.password = await bcrypt.hash(this.password , 10);
+        next()
     }else{
         return next()
     }
@@ -65,6 +66,18 @@ usersSchema.methods.isPasswordCorrect = async function (password){
     return await bcrypt.compare(password, this.password);
 };
 
-usersSchema.methods.accessToken = async function (password){
-    return await jwt.sign({ foo: 'bar' }, 'shhhhh');
+usersSchema.methods.accessToken = async function (){
+    const accessToken =  jwt.sign({id : this._id , username : this.userName , email : this.email}, process.env.ACCESS_TOKEN_SECRET ,{
+        expiresIn: process.env.ACCESS_TOKEN_EXPIRY 
+    });
+    return accessToken
 };
+
+usersSchema.methods.refreshToken = async function (){
+    const refreshToken =  jwt.sign({id : this._id , username : this.userName , email : this.email}, process.env.REFRESH_TOKEN_SECRET ,{
+        expiresIn: process.env.REFRESH_TOKEN_EXPIRY 
+    });
+    return refreshToken
+};
+
+export const Users = mongoose.model.Users ?? mongoose.model("Users" , usersSchema)
