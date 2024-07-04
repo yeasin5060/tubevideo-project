@@ -1,16 +1,23 @@
-import bcrypt from "bcrypt"
-import { Users } from "../models/users.models";
-const users = async ( req , res)=> {
-    const {userName , fullName , email , password} = req.body;
+import { Users } from "../models/users.models.js"
+import { ApiError } from "../utils/ApiError.js"
 
-    if([userName , fullName , email , password].some((field) => field ?.tirm() == "")){
-        res.send("every thing is need" );
-    }else{
-        const hashPassword = await bcrypt.hash(password , 10);
-        const user = await Users.create(userName , fullName , email , hashPassword)
-        const removepass = await Users.findById(user._id).select("-password")
-        res.json({message : "every thing ok"} , removepass)
-    }
+const register = async ( req , res)=> {
+  const {userName , fullName , email, password} = req.body
+
+  if([userName , fullName , email , password].some((field) => field ?.trim() === "")){
+    res.json( new ApiError())
+  }
+
+  const existingUser = await Users.findOne({
+      $or : [{userName } , {email}]
+  })
+
+  if(!existingUser){
+   res.json({
+      statuscode : 200,
+      message : "sob thik ache"
+   })
+  }
 }
 
-export{users}
+export{register}
