@@ -70,14 +70,14 @@ usersSchema.methods.generatorAccessToken = async function (){
     const accessToken =  jwt.sign({_id : this._id , username : this.userName , email : this.email}, process.env.ACCESS_TOKEN_SECRET ,{
         expiresIn: process.env.ACCESS_TOKEN_EXPIRY 
     });
-    return accessToken
+    return accessToken;
 };
 
 usersSchema.methods.generatorRefreshToken = async function (){
-    const refreshToken =  jwt.sign({id : this._id , username : this.userName , email : this.email}, process.env.REFRESH_TOKEN_SECRET ,{
+    const refreshToken =  jwt.sign({_id : this._id , email : this.email}, process.env.REFRESH_TOKEN_SECRET ,{
         expiresIn: process.env.REFRESH_TOKEN_EXPIRY 
     });
-    return refreshToken
+    return refreshToken;
 };
 
-export const Users = mongoose.model.Users ?? mongoose.model("Users" , usersSchema)
+export const Users = mongoose.model.Users ?? mongoose.model("Users" , usersSchema);
