@@ -39,7 +39,7 @@ const register = async ( req , res) => {
   const cteateUser = await Users.findById(user._id).select("-password -refreshToken");
 
   if(!cteateUser){
-   return res.json(new ApiError());
+   return res.json(new ApiError(401 , "invalide user"));
   }
   res.json(new ApiResponse( 200 , "user create" , cteateUser ));
   } catch (error) {
@@ -68,15 +68,30 @@ const login = async ( req , res) => {
       }
 
       const { accessToken , refreshToken} = await generatorAccessAndRefreshToken(userFound);
+      const loginUser = await Users.findById(userFound._id).select("-password")
       let options = {
         secure : true,
         httpOnly : true
       };
-     res.cookie("accessToken" ,accessToken , options).cookie("refreshToken" ,refreshToken , options).json(new ApiResponse(200 , "login successfully" , {userFound , accessToken , refreshToken}));
+     res.cookie("accessToken" ,accessToken , options).cookie("refreshToken" ,refreshToken , options).json(new ApiResponse(200 , "login successfully" , {loginUser , accessToken}));
 
     } catch (error) {
       res.json(new ApiError( error.message));
     }
 }
 
-export{register , login}
+const logOut = async (req, res) => {
+  await Users.findByIdAndUpdate(req.user,{
+    $set : {
+      refreshToken : null
+    }
+  })
+  let options = {
+    secure : true,
+    httpOnly : true
+  }
+  res.cookie("accessToken" ,options).cookie("refreshToken" , options)
+  res.json(new ApiResponse(200 , "ok"))
+}
+
+export{register , login , logOut}
