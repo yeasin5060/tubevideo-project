@@ -94,4 +94,7 @@ const logOut = async (req, res) => {
   res.json(new ApiResponse(200 , "ok"))
 }
 
-export{register , login , logOut}
+const uploadAvatarAndcover = async (req , res) => {
+      res.send(req.file)
+}
+export{register , login , logOut , uploadAvatarAndcover}

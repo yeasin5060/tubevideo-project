@@ -5,22 +5,22 @@ import jwt from "jsonwebtoken"
 const usersSchema = new Schema({
     userName : {
         type : String,
-        require : true,
+        required : true,
         unique : true
     },
     fullName : {
         type : String,
-        require : true,
+        required : true,
     },
     email : {
         type : String,
-        require : true,
+        required : true,
         unique : true
 
     },
     password : {
         type : String,
-        require : true
+        required : true
     },
     avatar : {
         type : String
