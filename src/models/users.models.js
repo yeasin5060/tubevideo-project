@@ -28,24 +28,6 @@ const usersSchema = new Schema({
     coverphoto : {
         type : String
     },
-    videos : [
-        {
-            type : Schema.Types.ObjectId,
-            ref : "Videos"
-        }
-    ],
-    history : [
-        {
-            type : Schema.Types.ObjectId,
-            ref : "History"
-        }
-    ],
-    playlist : [
-        {
-            type : Schema.Types.ObjectId,
-            ref : "Playlist"
-        }
-    ],
     refreshToken : {
         type : String
     }

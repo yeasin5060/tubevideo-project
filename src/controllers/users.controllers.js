@@ -1,6 +1,7 @@
 import { Users } from "../models/users.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { cloudinaryUpload } from "../utils/cioudinary.js";
 
 
 const generatorAccessAndRefreshToken = async (user) => {
@@ -90,11 +91,23 @@ const logOut = async (req, res) => {
     secure : true,
     httpOnly : true
   }
-  res.cookie("accessToken" ,options).cookie("refreshToken" , options)
-  res.json(new ApiResponse(200 , "ok"))
+  res.clearCookie("accessToken" ,options).clearCookie("refreshToken" , options)
+  res.json(new ApiResponse(200 , "successfuly refreshtoken null"))
 }
 
 const uploadAvatarAndcover = async (req , res) => {
-      res.send(req.file)
+      try {
+        if(req.files){
+          const {avatar , cover} = req.files
+          if(avatar){
+            const {path} = avatar[0]
+            const cloudinary = await cloudinaryUpload(path)
+            console.log("cloudinary" , cloudinary);
+          }
+        }
+        res.json(new ApiResponse(200 , "the file upload in cloudinary successfully"))
+      } catch (error) {
+        res.json(new ApiError( 400 , " photo upload rejected" , error.message))
+      }
 }
 export{register , login , logOut , uploadAvatarAndcover}
