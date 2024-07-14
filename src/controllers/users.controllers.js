@@ -1,7 +1,9 @@
 import { Users } from "../models/users.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { cloudinaryUpload } from "../utils/cioudinary.js";
+import { cloudinaryDelete, cloudinaryUpload } from "../utils/cioudinary.js";
+import { publicidex } from "../utils/publicidex.js";
+import jwt from "jsonwebtoken";
 
 
 const generatorAccessAndRefreshToken = async (user) => {
@@ -101,7 +103,11 @@ const uploadAvatarAndcover = async (req , res) => {
           const {avatar , cover} = req.files
           if(avatar){
             const {path} = avatar[0]
-            const {secure_url} = await cloudinaryUpload(path)
+            const {secure_url} = await cloudinaryUpload(path , "user")
+            if(req.user.avatar){
+              const publicId = publicidex(req.user.avatar)
+              await cloudinaryDelete(publicId)
+            }
             req.user.avatar = secure_url
             await req.user.save()
             const user = await Users.findById(req.user._id).select("-password")
@@ -112,11 +118,15 @@ const uploadAvatarAndcover = async (req , res) => {
           
           if(cover){
             const {path} = cover[0]
-            const {secure_url} = await cloudinaryUpload(path)
+            const {secure_url} = await cloudinaryUpload(path , "user")
+            if(req.user.cover){
+              const publicId = publicidex(req.user.cover)
+              await cloudinaryDelete(publicId)
+            }
             req.user.cover = secure_url
             await req.user.save()
             const user = await Users.findById(req.user._id).select("-password")
-            res.json(new ApiResponse(200 , "cover upload successfully", user))
+            res.json(new ApiResponse(200 , "cover upload successfully", user)) 
           }else{
             res.json(new ApiError( 400 , "cover upload field"))
           }
@@ -124,11 +134,42 @@ const uploadAvatarAndcover = async (req , res) => {
         }
         res.json(new ApiResponse(200 , "the file upload in cloudinary successfully"))
       } catch (error) {
+        console.log(error.message);
         if (!res.headersSent) {
           return res.status(500).json({ message: 'Internal Server Error' });
         }
-        console.log(error.message);
         //res.json(new ApiError( 400 , " photo upload rejected" , error.message))
       }
 }
-export{register , login , logOut , uploadAvatarAndcover}
+
+const generatorNewAccessToken = async ( req , res) => {
+    try {
+      const token = req.cookies?.refreshToken || req.body.refreshToken
+      if(!token){
+        return res.json(new ApiError(401 , "refresh token not found" ));
+      }
+
+      const decodeToken = jwt.verify(token ,process.env.REFRESH_TOKEN_SECRET)
+
+      if(!decodeToken){
+        return res.json(new ApiError(401 , "refresh token don't match " ));
+      }
+
+      const user = await Users.findById(decodeToken._id)
+
+      if(!user){
+        return res.json(new ApiError(401 , "user don't match" ));
+      }
+      const { accessToken , refreshToken} = await generatorAccessAndRefreshToken(user);
+      const loginUser = await Users.findById(user._id).select("-password")
+      let options = {
+        secure : true,
+        httpOnly : true
+      };
+     res.cookie("accessToken" ,accessToken , options).cookie("refreshToken" ,refreshToken , options).json(new ApiResponse(200 , "token generated successfully" , {loginUser , accessToken}));
+
+    } catch (error) {
+      return res.json(new ApiError(401 , "don't add new refresh token in database" , error.message ));
+    }
+}
+export{register , login , logOut , uploadAvatarAndcover , generatorNewAccessToken}
