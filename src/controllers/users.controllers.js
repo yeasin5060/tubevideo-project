@@ -101,13 +101,34 @@ const uploadAvatarAndcover = async (req , res) => {
           const {avatar , cover} = req.files
           if(avatar){
             const {path} = avatar[0]
-            const cloudinary = await cloudinaryUpload(path)
-            console.log("cloudinary" , cloudinary);
+            const {secure_url} = await cloudinaryUpload(path)
+            req.user.avatar = secure_url
+            await req.user.save()
+            const user = await Users.findById(req.user._id).select("-password")
+            res.json(new ApiResponse(200 , "avatar upload successfully", user))
+          }else{
+            res.json(new ApiError( 400 , "avatar upload field"))
           }
+          
+          if(cover){
+            const {path} = cover[0]
+            const {secure_url} = await cloudinaryUpload(path)
+            req.user.cover = secure_url
+            await req.user.save()
+            const user = await Users.findById(req.user._id).select("-password")
+            res.json(new ApiResponse(200 , "cover upload successfully", user))
+          }else{
+            res.json(new ApiError( 400 , "cover upload field"))
+          }
+          
         }
         res.json(new ApiResponse(200 , "the file upload in cloudinary successfully"))
       } catch (error) {
-        res.json(new ApiError( 400 , " photo upload rejected" , error.message))
+        if (!res.headersSent) {
+          return res.status(500).json({ message: 'Internal Server Error' });
+        }
+        console.log(error.message);
+        //res.json(new ApiError( 400 , " photo upload rejected" , error.message))
       }
 }
 export{register , login , logOut , uploadAvatarAndcover}

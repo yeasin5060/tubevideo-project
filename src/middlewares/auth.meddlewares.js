@@ -19,6 +19,6 @@ export const auth = async (req , res , next) => {
       req.user = user
       next()
     } catch (error) {
-      return res.json(new ApiError(401 , error.message ));
+      return res.json(new ApiError(401  ,"auth error", error.message ));
     }
 }

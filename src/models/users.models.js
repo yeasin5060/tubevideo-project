@@ -25,7 +25,7 @@ const usersSchema = new Schema({
     avatar : {
         type : String
     },
-    coverphoto : {
+    cover: {
         type : String
     },
     refreshToken : {

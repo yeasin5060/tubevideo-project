@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary';
+import fs from "fs"
 
 cloudinary.config({ 
     cloud_name: `${process.env.CLOUDINARY_CLOUD_NAME}`,
@@ -12,9 +13,12 @@ export const cloudinaryUpload = async (localpath , folder) => {
        .upload(
            localpath , {
                 resource_type : "auto",
-                folder
+                folder,
+                use_filename : true,
+                unique_filename : true
            }
        ) 
+       fs.unlinkSync(localpath)
         return uploadResult;
     } catch (error) {
         console.log("cloudinary error" , error.message);
