@@ -109,7 +109,7 @@ const uploadAvatarAndcover = async (req , res) => {
               await cloudinaryDelete(publicId)
             }
             req.user.avatar = secure_url
-            await req.user.save()
+            await req.user.save({validationBeforeSave : false})
             const user = await Users.findById(req.user._id).select("-password")
             res.json(new ApiResponse(200 , "avatar upload successfully", user))
           }else{
@@ -172,4 +172,43 @@ const generatorNewAccessToken = async ( req , res) => {
       return res.json(new ApiError(401 , "don't add new refresh token in database" , error.message ));
     }
 }
-export{register , login , logOut , uploadAvatarAndcover , generatorNewAccessToken}
+
+const changeCurrentPassword = async (req ,res) => {
+  try {
+    const {oldPassword , newPassword} =  req.body;
+  
+    if([oldPassword , newPassword].some((field) => field?.trim() == "")){
+      res.json(new ApiError( 400 , "All fields is require"));
+    };
+  
+    const user = await Users.findById(req.user._id);
+    const isNewPassword = await user.isPasswordCorrect(oldPassword);
+  
+    if ( !isNewPassword){
+      return res.json(new ApiError( 400 , "Invalid is password"));
+    };
+  
+    user.password = newPassword;
+    user.save({validationBeforeSave : false});
+  
+    const updatePassword = await Users.findById(user._id).select("-password");
+  
+    res.status(200).json(new ApiResponse(200 , "password update successfully" , updatePassword));
+    
+  } catch (error) {
+    res.json(new ApiError (400 , "updatepassword error" , error.message))
+  }
+}
+
+const getUser = async ( req , res) => {
+  try {
+    const user = await Users.findById(req.user._id).select("-password")
+
+    return res.status(200).json(new ApiResponse( 200 , "get user successfully" , user))
+
+  } catch (error) {
+    res.json(new ApiError(400 , "invalid user" , error.message))
+  }
+}
+
+export{register , login , logOut , uploadAvatarAndcover , generatorNewAccessToken ,changeCurrentPassword , getUser}

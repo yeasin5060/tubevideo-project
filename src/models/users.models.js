@@ -28,6 +28,12 @@ const usersSchema = new Schema({
     cover: {
         type : String
     },
+    videoList : [
+        {
+            type : Schema.Types.ObjectId,
+            ref : "video"
+        }
+    ],
     refreshToken : {
         type : String
     }

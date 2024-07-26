@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { generatorNewAccessToken, login, logOut, register, uploadAvatarAndcover } from "../controllers/users.controllers.js";
+import { changeCurrentPassword, generatorNewAccessToken, getUser, login, logOut, register, uploadAvatarAndcover } from "../controllers/users.controllers.js";
 import { auth } from "../middlewares/auth.meddlewares.js";
 import { upload } from "../middlewares/multer.middlewares.js";
 
@@ -19,6 +19,8 @@ router.route("/uploadPhoto").post(auth,upload.fields([
         name : "cover",
         maxCount : 3
     }
-]),uploadAvatarAndcover)
+]),uploadAvatarAndcover);
+router.route("/updatepassword").post(auth,changeCurrentPassword);
+router.route("/getuser").post(auth,getUser);
 
 export default router
