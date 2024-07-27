@@ -202,13 +202,37 @@ const changeCurrentPassword = async (req ,res) => {
 
 const getUser = async ( req , res) => {
   try {
-    const user = await Users.findById(req.user._id).select("-password")
 
-    return res.status(200).json(new ApiResponse( 200 , "get user successfully" , user))
+    return res.status(200).json(new ApiResponse( 200 , req.user ,"get user successfully"))
 
   } catch (error) {
     res.json(new ApiError(400 , "invalid user" , error.message))
   }
 }
 
-export{register , login , logOut , uploadAvatarAndcover , generatorNewAccessToken ,changeCurrentPassword , getUser}
+const userAccoundDetails = async (req ,res) => {
+  try {
+    const {userName , fullName} = req.body;
+
+    if(!(userName || fullName)){
+      return res.status(400).json(400 , "all fields is require")
+    }
+    const user = await Users.findByIdAndUpdate(req.user?._id,
+      {
+        $set : {
+          userName : userName,
+          fullName : fullName
+        }
+      },
+      {
+        new : true
+      }
+    ).select("-password")
+
+      return res.status(200).json(new ApiResponse(200 , "fullname and email update successfully" , user))
+  } catch (error) {
+    res.json(new ApiError(400 , "user accound details error" , error.message))
+  }
+}
+
+export{register , login , logOut , uploadAvatarAndcover , generatorNewAccessToken ,changeCurrentPassword , getUser , userAccoundDetails}
