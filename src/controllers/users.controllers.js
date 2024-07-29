@@ -235,4 +235,85 @@ const userAccoundDetails = async (req ,res) => {
   }
 }
 
-export{register , login , logOut , uploadAvatarAndcover , generatorNewAccessToken ,changeCurrentPassword , getUser , userAccoundDetails}
+const userChannleProfile = async (req , res) => {
+  try {
+    const {userName} = req.params;
+
+    if(!userName){
+      throw new ApiError(400 , "user not found")
+    }
+
+    const channle = await Users.aggregate([
+      {
+        $match : {
+          userName : userName?.toLowerCase()
+        }
+      },
+      {
+        $lookup : {
+          from : "subscriptions",
+          localField : "_id",
+          foreignField : "channle",
+          as : "subscripbers"
+
+        }
+      },
+      {
+        $lookup : {
+          from : "subscriptions",
+          localField : "_id",
+          foreignField : "subscripber",
+          as : "subscripbersTo"
+
+        }
+      },
+      {
+        $addFields : {
+          subscripberCount : {
+            $size : "$subscripbers"
+          },
+          channleSubscripberCound : {
+            $size : "$subscripbersTo" 
+          },
+          isSubscripber : {
+            $cond : {
+              if : {$in : [req.user?._id,"$subscriptions.subscripber"]},
+              then : true,
+              else : false
+            }
+          }
+        }
+      },
+      {
+        $project : {
+          userName : 1 , 
+          fullName : 1 ,
+          avatar : 1,
+          cover : 1,
+          subscripberCount : 1 ,
+          channleSubscripberCound : 1 ,
+          isSubscripber : 1
+        }
+      }
+    ])
+
+    if(!channle?.length) {
+      throw new ApiError(400 , "channle dose not exists")
+    };
+    res.status(200).json(new ApiResponse(200 , channle[0] , "channle fetched successfully"))
+
+  } catch (error) {
+    throw new ApiError(401 ,"user channle profile error" , error.message)
+  }
+}
+
+export{register ,
+   login , 
+   logOut , 
+   uploadAvatarAndcover , 
+   generatorNewAccessToken ,
+   changeCurrentPassword , 
+   getUser , 
+   userAccoundDetails,
+   userChannleProfile
+  }
