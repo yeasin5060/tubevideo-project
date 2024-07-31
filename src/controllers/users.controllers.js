@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Users } from "../models/users.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -235,7 +236,7 @@ const userAccoundDetails = async (req ,res) => {
   }
 }
 
-const userChannleProfile = async (req , res) => {
+const getUserChannleProfile = async (req , res) => {
   try {
     const {userName} = req.params;
 
@@ -307,6 +308,54 @@ const userChannleProfile = async (req , res) => {
   }
 }
 
+const getVideo = async (req ,res) => {
+  try {
+    const user = await Users.aggregate([
+      {
+        $match : {
+          _id : new mongoose.Types.ObjectId(req.user._id)
+        }
+      }, 
+      {
+        $lookup : {
+          from : "videos",
+          localField : "videoList",
+          foreignField :"_id",
+          as : "watchhistory",
+          pipeline : [
+            {
+              $lookup : {
+                from : "users",
+                localField : "owner",
+                foreignField : "_id",
+                as : "owner",
+                pipeline : [
+                  {
+                    $project : {
+                      fullName : 1,
+                      userName : 1,
+                      avatar : 1
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              $addFields : {
+                owner : {
+                  first : "$owner"
+                }
+              }
+            }
+          ]
+        }
+      }
+    ])
+  } catch (error) {
+    throw new ApiError(401 ,"get video error" , error.message)
+  }
+}
+
 export{register ,
    login , 
    logOut , 
@@ -315,5 +364,5 @@ export{register ,
    changeCurrentPassword , 
    getUser , 
    userAccoundDetails,
-   userChannleProfile
+   getUserChannleProfile
   }
